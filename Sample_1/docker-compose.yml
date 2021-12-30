@@ -1,0 +1,42 @@
+version: '3.9'
+
+services:
+  consumer:
+    build:
+      context: .
+      dockerfile: Rabbit.Consumer/Dockerfile
+    depends_on:
+      - producer
+      - rabbitmq    
+    environment:
+      RABBITMQ_HOST: 'rabbitmq'
+      RABBITMQ_PORT: '5672'
+      RABBITMQ_QUEUE: 'Sample_1'
+      RABBITMQ_USERNAME: 'root'
+      RABBITMQ_PASSWORD: 'root'
+  producer:
+    build:
+      context: .
+      dockerfile: Rabbit.Producer/Dockerfile
+    depends_on:
+      - rabbitmq
+    environment:
+      RABBITMQ_HOST: 'rabbitmq'
+      RABBITMQ_PORT: '5672'
+      RABBITMQ_QUEUE: 'Sample_1'
+      RABBITMQ_USERNAME: 'root'
+      RABBITMQ_PASSWORD: 'root'
+  rabbitmq:
+      image: rabbitmq:3.9.11-management
+      container_name: rabbitmq
+      volumes:
+        - ./.docker/rabbitmq/etc/:/etc/rabbitmq/
+        - ./.docker/rabbitmq/data/:/var/lib/rabbitmq/
+        - ./.docker/rabbitmq/logs/:/var/log/rabbitmq/
+      environment:
+        RABBITMQ_ERLANG_COOKIE: 'mycookie'
+        RABBITMQ_DEFAULT_USER: 'root'
+        RABBITMQ_DEFAULT_PASS: 'root'
+      ports:
+          - 5672:5672
+          - 15672:15672
