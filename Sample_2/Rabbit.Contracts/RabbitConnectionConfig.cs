@@ -13,5 +13,6 @@ namespace Rabbit.Contracts
         public string RABBITMQ_USERNAME { get; set; } = null!;
         public string RABBITMQ_PASSWORD { get; set; } = null!;
         public string RABBITMQ_QUEUE { get; set; } = null!;
+        public int RABBITMQ_HANDLE_MESSAGE_SECONDS { get; set; }
     }
 }

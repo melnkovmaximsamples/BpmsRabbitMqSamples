@@ -23,7 +23,7 @@ using (var channel = connection.CreateModel())
     {
         var body = e.Body.ToArray();
         var message = Encoding.UTF8.GetString(body);
-        Console.WriteLine(message);
+        Console.WriteLine($"[Получено] {message}");
     };
 
     channel.BasicConsume(queue: rabbitConnectionConfig.RABBITMQ_QUEUE, autoAck: true, consumer: consumer);

@@ -14,6 +14,19 @@ services:
       RABBITMQ_QUEUE: 'Sample_1'
       RABBITMQ_USERNAME: 'root'
       RABBITMQ_PASSWORD: 'root'
+  consumer_2:
+    build:
+      context: .
+      dockerfile: Rabbit.Consumer/Dockerfile
+    depends_on:
+      - producer
+      - rabbitmq    
+    environment:
+      RABBITMQ_HOST: 'rabbitmq'
+      RABBITMQ_PORT: '5672'
+      RABBITMQ_QUEUE: 'Sample_1'
+      RABBITMQ_USERNAME: 'root'
+      RABBITMQ_PASSWORD: 'root'
   producer:
     build:
       context: .

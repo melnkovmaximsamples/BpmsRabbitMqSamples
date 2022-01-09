@@ -1,54 +1,70 @@
 version: '3.9'
 
 services:
-  consumer_1_sample_2:
+  consumer:
     build:
       context: .
-      dockerfile: Rabbit.Consumer_1/Dockerfile
+      dockerfile: Rabbit.Consumer/Dockerfile
     depends_on:
-      - producer_sample_2
-      - rabbitmq_sample_2    
+      - producer
+      - rabbitmq    
+    restart: on-failure
     environment:
-      RABBITMQ_HOST: 'rabbitmq_sample_2'
-      RABBITMQ_PORT: '5673'
-      RABBITMQ_QUEUE: 'Sample_2'
+      RABBITMQ_HOST: 'rabbitmq'
+      RABBITMQ_PORT: '5672'
+      RABBITMQ_QUEUE: 'Sample_2_persistant'
       RABBITMQ_USERNAME: 'root'
       RABBITMQ_PASSWORD: 'root'
-  consumer_2_sample_2:
+      RABBITMQ_HANDLE_MESSAGE_SECONDS: 5
+    networks:
+        - test-network
+  consumer_2:
     build:
       context: .
-      dockerfile: Rabbit.Consumer_2/Dockerfile
+      dockerfile: Rabbit.Consumer/Dockerfile
     depends_on:
-      - producer_sample_2
-      - rabbitmq_sample_2    
+      - producer
+      - rabbitmq    
+    restart: on-failure
     environment:
-      RABBITMQ_HOST: 'rabbitmq_sample_2'
-      RABBITMQ_PORT: '5673'
-      RABBITMQ_QUEUE: 'Sample_2'
+      RABBITMQ_HOST: 'rabbitmq'
+      RABBITMQ_PORT: '5672'
+      RABBITMQ_QUEUE: 'Sample_2_persistant'
       RABBITMQ_USERNAME: 'root'
       RABBITMQ_PASSWORD: 'root'
-  producer_sample_2:
+      RABBITMQ_HANDLE_MESSAGE_SECONDS: 1
+    networks:
+        - test-network
+  producer:
     build:
       context: .
       dockerfile: Rabbit.Producer/Dockerfile
     depends_on:
-      - rabbitmq_sample_2
+      - rabbitmq
+    restart: on-failure
     environment:
-      RABBITMQ_HOST: 'rabbitmq_sample_2'
-      RABBITMQ_PORT: '5673'
-      RABBITMQ_QUEUE: 'Sample_2'
+      RABBITMQ_HOST: 'rabbitmq'
+      RABBITMQ_PORT: '5672'
+      RABBITMQ_QUEUE: 'Sample_2_persistant'
       RABBITMQ_USERNAME: 'root'
       RABBITMQ_PASSWORD: 'root'
-  rabbitmq_sample_2:
+    networks:
+        - test-network
+  rabbitmq:
       image: rabbitmq:3.9.11-management
+      container_name: rabbitmq
       volumes:
-        - ./.docker/rabbitmq/etc/:/etc/rabbitmq/
-        - ./.docker/rabbitmq/data/:/var/lib/rabbitmq/
-        - ./.docker/rabbitmq/logs/:/var/log/rabbitmq/
+        - '~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/mnesia/'
       environment:
         RABBITMQ_ERLANG_COOKIE: 'mycookie'
         RABBITMQ_DEFAULT_USER: 'root'
         RABBITMQ_DEFAULT_PASS: 'root'
       ports:
-          - 5673:5672
-          - 15673:15672
+          - 5672:5672
+          - 15672:15672
+      networks:
+          - test-network
+
+networks:
+    test-network:
+        driver: bridge      

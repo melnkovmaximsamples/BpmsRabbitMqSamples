@@ -3,7 +3,7 @@ using RabbitMQ.Client;
 using System.Text;
 
 var rabbitConnectionConfig = ConfigFactory.GetRabbitConnectionConfig();
-var connectionFactory = new ConnectionFactory()
+var factory = new ConnectionFactory
 {
     HostName = rabbitConnectionConfig.RABBITMQ_HOST,
     Port = rabbitConnectionConfig.RABBITMQ_PORT,
@@ -11,23 +11,32 @@ var connectionFactory = new ConnectionFactory()
     Password = rabbitConnectionConfig.RABBITMQ_PASSWORD
 };
 
-Console.WriteLine(rabbitConnectionConfig.RABBITMQ_HOST);
-
-using (var connection = connectionFactory.CreateConnection())
-using (var channel = connection.CreateModel())
+var cancellationTokenSource = new CancellationTokenSource();
+var cancellationToken = cancellationTokenSource.Token;
+await Task.Run(async () =>
 {
-    channel.QueueDeclare(rabbitConnectionConfig.RABBITMQ_QUEUE, durable: false, exclusive: false, autoDelete: false, arguments: null);
-
-    var properties = channel.CreateBasicProperties();
-    properties.Persistent = true;
-
-    while (true)
+    using (var connection = factory.CreateConnection())
+    using (var channel = connection.CreateModel())
     {
-        var message = $"Привет из прошлого! Сообщение создано {DateTime.Now}";
-        var body = Encoding.UTF8.GetBytes(message);
+        var properties = channel.CreateBasicProperties();
 
-        channel.BasicPublish(string.Empty, rabbitConnectionConfig.RABBITMQ_QUEUE, properties, body);
+        // помечаем наши сообщения как постоянные - тоже необходимо для того, чтобы после перезапуска
+        // RabbitMQ они не были удалены. Сохраняет его на диск (но есть небольшой промежуток, когда оно может быть потеряно)
+        properties.Persistent = true;
+        // durable - настраиваем очередь на сохранение сообщений после перезапуска RabbitMQ
+        // ВАЖНО: если очередь уже создана без этого флага, то это не поможет
+        channel.QueueDeclare(rabbitConnectionConfig.RABBITMQ_QUEUE, durable: true, exclusive: false, autoDelete: false, null);
 
-        await Task.Delay(TimeSpan.FromSeconds(3));
+        while (cancellationToken.IsCancellationRequested == false)
+        {
+            var message = $"Отправляем сообщение с текущей датой {DateTime.Now}";
+            var body = Encoding.UTF8.GetBytes(message);
+
+            channel.BasicPublish(string.Empty, rabbitConnectionConfig.RABBITMQ_QUEUE, basicProperties: properties, body: body);
+
+            //Console.WriteLine($"В очередь '{rabbitConnectionConfig.RABBITMQ_QUEUE}' отправлено сообщение: '{message}'");
+
+            await Task.Delay(300);
+        }
     }
-}
+}, cancellationToken);

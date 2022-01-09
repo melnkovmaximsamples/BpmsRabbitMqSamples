@@ -27,7 +27,7 @@ await Task.Run(async () =>
 
             channel.BasicPublish(string.Empty, rabbitConnectionConfig.RABBITMQ_QUEUE, body: body);
 
-            Console.WriteLine($"В очередь '{rabbitConnectionConfig.RABBITMQ_QUEUE}' отправлено сообщение: '{message}'");
+            Console.WriteLine($"[Отправлено] В очередь '{rabbitConnectionConfig.RABBITMQ_QUEUE}' отправлено сообщение: '{message}'");
 
             await Task.Delay(2000);
         }

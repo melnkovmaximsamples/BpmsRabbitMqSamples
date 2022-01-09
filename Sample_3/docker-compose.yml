@@ -1,0 +1,74 @@
+version: '3.9'
+
+services:
+  consumer:
+    build:
+      context: .
+      dockerfile: Rabbit.Consumer/Dockerfile
+    depends_on:
+      - producer
+      - rabbitmq    
+    restart: on-failure
+    environment:
+      RABBITMQ_HOST: 'rabbitmq'
+      RABBITMQ_PORT: '5672'
+      RABBITMQ_QUEUE: 'Sample_2_persistant'
+      RABBITMQ_USERNAME: 'root'
+      RABBITMQ_PASSWORD: 'root'
+      RABBITMQ_EXCHANGE: 'Sample_3'
+      RABBITMQ_HANDLE_MESSAGE_SECONDS: 5
+    networks:
+        - test-network
+  consumer_2:
+    build:
+      context: .
+      dockerfile: Rabbit.Consumer/Dockerfile
+    depends_on:
+      - producer
+      - rabbitmq    
+    restart: on-failure
+    environment:
+      RABBITMQ_HOST: 'rabbitmq'
+      RABBITMQ_PORT: '5672'
+      RABBITMQ_QUEUE: 'Sample_2_persistant'
+      RABBITMQ_USERNAME: 'root'
+      RABBITMQ_PASSWORD: 'root'
+      RABBITMQ_EXCHANGE: 'Sample_3'
+      RABBITMQ_HANDLE_MESSAGE_SECONDS: 1
+    networks:
+        - test-network
+  producer:
+    build:
+      context: .
+      dockerfile: Rabbit.Producer/Dockerfile
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+    environment:
+      RABBITMQ_HOST: 'rabbitmq'
+      RABBITMQ_PORT: '5672'
+      RABBITMQ_QUEUE: 'Sample_2_persistant'
+      RABBITMQ_USERNAME: 'root'
+      RABBITMQ_PASSWORD: 'root'
+      RABBITMQ_EXCHANGE: 'Sample_3'
+    networks:
+        - test-network
+  rabbitmq:
+      image: rabbitmq:3.9.11-management
+      container_name: rabbitmq
+      volumes:
+        - '~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/mnesia/'
+      environment:
+        RABBITMQ_ERLANG_COOKIE: 'mycookie'
+        RABBITMQ_DEFAULT_USER: 'root'
+        RABBITMQ_DEFAULT_PASS: 'root'
+        ACCEPT_EULA: Y
+      ports:
+          - 5672:5672
+          - 15672:15672
+      networks:
+          - test-network
+
+networks:
+    test-network:
+        driver: bridge      
